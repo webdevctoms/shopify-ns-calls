@@ -31,14 +31,38 @@ define(['N/https'] ,
             return promise;
         }
 
-        function getAllProductsSync (options,productData) {
-            if(!productData){
-                productData = [];
+        function getAllProductsSync (options) {
+            try{
+                var page = 1;
+                var url = options.keyData.url + 'products.json?limit=250&page=' + page;
+                var authKey = options.keyData.authKey;
+
+                var header = {
+                    Authorization: 'Basic ' + authKey
+                };
+                var shopifyData = https.get({
+                    url:url,
+                    headers:header
+                });
+                log.debug ({
+                    title: 'Shopify Data',
+                    details: shopifyData
+                });
+                var parsedBody = JSON.parse(shopifyData.body);
+                log.debug ({
+                    title: 'Shopify Data parsed',
+                    details: parsedBody.products
+                });
+                var productData = parsedBody.products;
+                return productData;
             }
-            var url = options.keyData.url;
-            var authKey = options.authKey;
-            productData.push('done timeout');
-            return productData;
+            catch(err){
+                log.error({
+					title:err.name + ' error getting all product data',
+					details:err
+				});
+            }
+            
         }
 
     return {
