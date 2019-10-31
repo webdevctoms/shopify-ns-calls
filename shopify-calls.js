@@ -44,11 +44,31 @@ define(['N/https'] ,
             return normalizedArray;
         }
 
-        function getAllProductsSync (options) {
-            try{
+        function buildFields(fields){
+            var fieldString = '&fields=';
+            for(var i = 0;i < fields.length;i++){
+                if(i !== fields.lenght - 1){
+                    fieldString += fields[i] + ',';
+                }
+                else{
+                    fieldString += fields[i];
+                } 
+            }
+
+            return fieldString;
+        }
+
+        function getAllProductsSync (options,fields) {
+            try{   
+                if(fields){
+                    fields = buildFields(fields);
+                }
+                else{
+                    fields = ""
+                }
                 var page = 1;
                 var productData = [];
-                var url = options.keyData.url + 'products.json?limit=250&page=' + page;
+                var url = options.keyData.url + 'products.json?limit=250&page=' + page + fields;
                 var authKey = options.keyData.authKey;
 
                 var header = {
@@ -70,7 +90,7 @@ define(['N/https'] ,
                 productData.push(parsedBody.products);
                 while(parsedBody.products.length > 0){
                     page++;
-                    url = options.keyData.url + 'products.json?limit=250&page=' + page;
+                    url = options.keyData.url + 'products.json?limit=250&page=' + page + fields;
                     shopifyData = https.get({
                         url:url,
                         headers:header
