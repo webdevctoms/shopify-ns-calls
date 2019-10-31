@@ -30,10 +30,24 @@ define(['N/https'] ,
             
             return promise;
         }
+        //take array of arrays and turn it into a single array
+        function normalizeArray(productData){
+            var normalizedArray = [];
+
+            for(var i = 0;i < productData.length;i++){
+                for(var k = 0;k < productData[i].length;k++){
+                    var product = productData[i][k];
+                    normalizedArray.push(product);
+                }
+            }
+
+            return normalizedArray;
+        }
 
         function getAllProductsSync (options) {
             try{
                 var page = 1;
+                var productData = [];
                 var url = options.keyData.url + 'products.json?limit=250&page=' + page;
                 var authKey = options.keyData.authKey;
 
@@ -53,8 +67,25 @@ define(['N/https'] ,
                     title: 'Shopify Data parsed',
                     details: parsedBody.products
                 });
-                var productData = parsedBody.products;
-                return productData;
+                productData.push(parsedBody.products);
+                while(parsedBody.products.length > 0){
+                    page++;
+                    url = options.keyData.url + 'products.json?limit=250&page=' + page;
+                    shopifyData = https.get({
+                        url:url,
+                        headers:header
+                    });
+                    parsedBody = JSON.parse(shopifyData.body);
+                    if(parsedBody.products.length > 0){
+                        productData.push(parsedBody.products);
+                    }
+                    //safety stop
+                    if(page >= 10){
+                        break;
+                    }
+                }
+                var allProducts = normalizeArray(productData);
+                return allProducts;
             }
             catch(err){
                 log.error({
